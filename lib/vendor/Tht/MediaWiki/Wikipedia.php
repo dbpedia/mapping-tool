@@ -40,11 +40,11 @@ class Tht_MediaWiki_Wikipedia extends Tht_MediaWiki_Reader_Core
 
         $output   = array();
         $max_rand = count($urlList)-1;
-        for($i=0; $i < 5; $i++){
+        for($i=0; $i < min(5,count($urlList)); $i++){
             $random   = mt_rand(0, $max_rand);
             $output[] = array(
                 'url'  => $wiki_url . '/' . $urlList[$random],
-                'name' => htmlentities($urlList[$random])
+                'name' => htmlspecialchars($urlList[$random], ENT_NOQUOTES, "UTF-8")
             );
         }
 

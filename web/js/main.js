@@ -12,7 +12,8 @@ Ext.onReady(function(){
     var wikipediaTemplatesStore = new Ext.data.JsonStore({
          url: Ext.HTTP_SERVICE_URL + '/api.php'
         ,baseParams: {
-            action: 'autocomplete'
+            action: 'autocomplete',
+            lang:   lang_parameter
         }
         ,totalProperty: 'total'
         ,fields: [
@@ -88,6 +89,7 @@ Ext.onReady(function(){
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
             action: 'ontology',
+            lang: lang_parameter,
             load: 'initial'
         }
     }); // eof treeLoader
@@ -228,6 +230,7 @@ Ext.onReady(function(){
                                     async: false,
                                     data: {
                                         'action': 'ontologyclass_save',
+                                        'lang':lang_parameter,
                                         'titles': 'OntologyClass:' + title,
                                         'text': text
                                     },
@@ -284,6 +287,7 @@ Ext.onReady(function(){
                         store: new Ext.data.JsonStore({
                             url: Ext.HTTP_SERVICE_URL + '/api.php',
                             baseParams: {
+                                 lang: lang_parameter,
                                 action: 'ontology_autocomplete'
                             },
                             totalProperty: 'total',
@@ -367,6 +371,12 @@ Ext.onReady(function(){
                 width: 150
             }),// eof SearchField
             '-',
+            new Ext.Button({text:'test', listeners:{click:function(el,e)
+            {
+                      window.open("http://mappings.dbpedia.org/server/"+mapping_route+"/extractionSamples/"+mapping_alias+":"+Ext.getCmp('templatename').getValue().replace(new RegExp(template_alias+":", "g"), '').replace(/Template\:/, '') );
+            }
+              }
+            }),
             new Ext.Button({
                 text: 'examples',
 
@@ -388,13 +398,15 @@ Ext.onReady(function(){
                             async: false,
                             dataType: 'json',
                             data: {
-                                'titles': 'Template:' + Ext.getCmp('templatename').getValue().replace(/Template\:/, ''),
+                                 'lang' : lang_parameter,
+                                'titles': 'Template:' + Ext.getCmp('templatename').getValue().replace(new RegExp(template_alias+":", "g"), '').replace(/Template\:/, ''),
                                 'action': 'examples'
                             },
 
                             // on success add each found Wikipedia article
                             // url to the menu (see above)
                             success: function(json){
+                                
                                 $(json).each(function(){
                                     var site = this;
                                     examplePagesMenu.add(
@@ -445,6 +457,7 @@ Ext.onReady(function(){
     var propertyTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
+            lang: lang_parameter,
             action: 'properties',
             load: 'initial'
         }
@@ -560,6 +573,7 @@ Ext.onReady(function(){
                                     dataType: 'json',
                                     async: false,
                                     data: {
+                                          'lang' : lang_parameter,
                                         'action': 'property_save',
                                         'titles': 'OntologyProperty:' + title,
                                         'text': text
@@ -586,6 +600,7 @@ Ext.onReady(function(){
                                                     async: false,
                                                     data: {
                                                         'action': 'property_save_force',
+                                                        'lang' : lang_parameter,
                                                         'titles': response.newTitle,
                                                         'text': response.newMarkup
                                                     },
@@ -596,7 +611,7 @@ Ext.onReady(function(){
                                                             }
                                                         });
                                                         x.close();
-                                                    },
+                                                    }
                                                 }); // eof $.ajax
                                             }
                                         });
@@ -641,7 +656,9 @@ Ext.onReady(function(){
                         store: new Ext.data.JsonStore({
                             url: Ext.HTTP_SERVICE_URL + '/api.php',
                             baseParams: {
-                                action: 'ontology_autocomplete'
+                                action: 'ontology_autocomplete'    ,
+                                lang : lang_parameter
+
                             },
                             totalProperty: 'total',
                             fields: [
@@ -688,6 +705,7 @@ Ext.onReady(function(){
     var templateTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
+            lang: lang_parameter,
             action: 'template',
             load: 'initial'
         }
@@ -718,7 +736,8 @@ Ext.onReady(function(){
     // Ext JS data loader for the units widget
     var unitTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
-        baseParams: {
+        baseParams: {            
+            lang:lang_parameter,
             action: 'unit',
             load: 'initial'
         }
@@ -808,6 +827,7 @@ Ext.onReady(function(){
                                     dataType: 'json',
                                     async: false,
                                     data: {
+                                    'lang': lang_parameter,
                                         'action': 'datatype_save',
                                         'titles': 'Datatype:' + title,
                                         'text': '{{DisclaimerDatatype}}'
@@ -863,7 +883,8 @@ Ext.onReady(function(){
     var mappingsTreeLoader = new Ext.dbpedia.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
-            action: 'map'
+            action: 'map',
+            lang: lang_parameter
             //load: 'initial'
         },
         listeners: {
@@ -1248,6 +1269,7 @@ Ext.onReady(function(){
                         url: Ext.HTTP_SERVICE_URL + '/api.php',
                         params: {
                             action: 'updateall',
+                            lang : lang_parameter,
                             key: Ext.urlEncode({}, text)
                         },
                         success: function(response, opts) {
@@ -1344,6 +1366,7 @@ Ext.onReady(function(){
                                         async: false,
                                         data: {
                                             'action': 'mapping_save',
+                                            'lang': lang_parameter,
                                             'titles': DBpediaMapperTree.getRootNode().firstChild.attributes.text,
                                             'text': Ext.getCmp('output').getValue()
                                         },
@@ -1368,6 +1391,7 @@ Ext.onReady(function(){
                                         dataType: 'json',
                                         async: false,
                                         data: {
+                                             'lang': lang_parameter,
                                             'action': 'remotevalidate',
                                             'titles': DBpediaMapperTree.getRootNode().firstChild.attributes.text,
                                             'text': Ext.getCmp('output').getValue()
@@ -1557,7 +1581,9 @@ Ext.onReady(function(){
     function loadDbpediaTemplates(templateName)
     {
         mappingsTreeLoader.requestMethod = "GET";
-        mappingsTreeLoader.baseParams.titles = "Mapping:" + templateName;
+        var template= templateName.replace(/Template\:/, '');
+        var regexp = new RegExp(template_alias+":", "g");
+        mappingsTreeLoader.baseParams.titles =mapping_alias+":"  + template.replace(regexp, '');   
         DBpediaMapperTree.root.reload();
         DBpediaMapperTree.expandAll();
     }
@@ -1704,6 +1730,7 @@ Ext.onReady(function(){
                     dataType: 'json',
                     type: 'POST',
                     data: {
+                        'lang': lang_parameter,
                         'action' : 'properties',
                         'load': currentNode.attributes.value
                     },

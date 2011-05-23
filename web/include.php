@@ -34,6 +34,7 @@ require_once __ROOT__ . '/lib/vendor/doctrine/Doctrine.php';
 // register Doctrine ORM class loader
 spl_autoload_register(array('Doctrine', 'autoload'));
 spl_autoload_register(array('Doctrine', 'modelsAutoload'));
+$lang= $_GET["lang"];
 
 // create config from scratch or cache
 // depending on ENVIRONMENT
@@ -46,10 +47,23 @@ $backendOptions  = array(
 );
 $cache = Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
 $cacheID = 'config';
-if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'){
-    $config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT);
+if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'||isset($lang)){
+
+     $config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT,true);
+    if(isset($lang)){
+
+     
+      if(!file_exists(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini')){
+          $lang='en';
+      }
+    }
+    else $lang='en';
+    $config->merge(new Zend_Config_Ini(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini', ENVIRONMENT));
+    $config->setReadOnly();
     $cache->save($config, $cacheID);
+
 }
+
 Zend_Registry::set('config', $config);
 
 
@@ -76,7 +90,7 @@ if(!($config->tool->enable->debug)){
 }
 
 Zend_Registry::set('logger', $logger);
-
+Zend_Registry::get('logger')->log("Test".$config->dbpedia->i18n->mapping->alias, 1);
 /**
 How To Use The Log
 
@@ -143,3 +157,5 @@ if($config->database->cache->apc){
 
 // load ORM models for autoloader
 Doctrine::loadModels(__ROOT__ . '/lib/models');
+
+
