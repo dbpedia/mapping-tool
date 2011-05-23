@@ -11,7 +11,7 @@ class Tht_MediaWiki_Document implements Tht_MediaWiki_IDocument
     protected $namespace     = null;
     protected $pageid        = null;
     protected $lastrevid     = null;
-
+    protected $redirects     = null;
     /**
      * creates a new MediaWiki page representation
      *
@@ -92,5 +92,15 @@ class Tht_MediaWiki_Document implements Tht_MediaWiki_IDocument
     public function getLastrevid()
     {
         return $this->lastrevid;
+    }
+
+    public function setRedirects($redirects)
+    {
+        $this->redirects = $redirects;
+    }
+    
+    public function getRedirects()
+    {
+        return $this->redirects;
     }
 }

@@ -35,8 +35,8 @@ class Tht_MediaWiki_Wikipedia extends Tht_MediaWiki_Reader_Core
                 $urlList[] = $page['title'];
             }
         }
-
-        $wiki_url = Zend_Registry::get('config')->wikipedia->wiki->url;
+        $lang=Zend_Registry::get('language');
+        $wiki_url = $lang["wikipediaURL"];
 
         $output   = array();
         $max_rand = count($urlList)-1;
@@ -94,7 +94,28 @@ class Tht_MediaWiki_Wikipedia extends Tht_MediaWiki_Reader_Core
     {
         $response = parent::getMarkupByTitle($title);
         return json_encode(array(
-            'templateMarkup' => $response->getText()
+            'templateMarkup' => $response->getText(),
+            'redirect'=>$response->getRedirects()
         ));
+    }
+
+    public function getTemplateAlias(){
+
+         $getParameters = array(
+            'action'        => 'query',
+            'meta'          => 'siteinfo',
+            'siprop'       => 'namespaces',
+            'format' 	  => 'json'
+
+        );
+
+        $this->client->resetParameters();
+        $this->client->setParameterGet($getParameters);
+        $response = $this->client->request(Zend_Http_Client::GET);
+        $parsed_response = json_decode($response->getBody(), true);
+
+        $namespace     = $parsed_response['query']['namespaces'][10];
+
+        return $namespace["*"];
     }
 }

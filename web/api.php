@@ -112,6 +112,9 @@ switch(Tht_Helper_Parameter::REQUEST('action', $defaultValue)){
     case 'examples':
         require_once 'api/exampleArticles.php';
         break;
+    case 'languages':
+        require_once 'api/languages.php';
+        break;
     
     // no given action
     default:

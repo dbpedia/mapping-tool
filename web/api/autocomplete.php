@@ -9,7 +9,8 @@ if(!defined('__INCLUDE_LOADED__')){
  */
 
 if (Tht_Helper_Parameter::hasPOST('query')){
-    $apiUrl = Zend_Registry::get('config')->wikipedia->api->url;
+       $lang=Zend_Registry::get('language');
+      $apiUrl = $lang["wikipediaAPIURL"];
 
     // initialize cache
     $frontendOptions = array(
@@ -22,7 +23,7 @@ if (Tht_Helper_Parameter::hasPOST('query')){
     $cache = Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
 
     $cacheId = md5(__FILE__ . Tht_Helper_Parameter::POST('query'));
-    if(!Zend_Registry::get('config')->wikipedia->cache->api->autocomplete->enable || !($pages = $cache->load($cachId))){
+    if(!Zend_Registry::get('config')->wikipedia->cache->api->autocomplete->enable || !($pages = $cache->load($cacheId))){
         $mww = new Tht_MediaWiki_Wikipedia($apiUrl);
         $pages = $mww->getSuggestedPagesByTitle(Tht_Helper_Parameter::POST('query'));
         
@@ -33,6 +34,7 @@ if (Tht_Helper_Parameter::hasPOST('query')){
     
     Tht_Helper_Header::JS();
     //header('Content-type: text/javascript;charset=utf-8');
+    //var_dump($lang);
     echo $pages;
 } else {
     Tht_Helper_Header::badRequest();

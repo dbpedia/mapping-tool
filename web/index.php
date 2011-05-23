@@ -36,15 +36,17 @@ function curPageURL() {
           
     <script type="text/javascript">
       var requestedTemplate = "<?php echo Tht_Helper_Parameter::hasGET('titles') ? Tht_Helper_Parameter::GET('titles') : "Infobox company"; ?>";
-      var mapping_alias  = "<?php echo $config->dbpedia->i18n->mapping->alias; ?>"         ;
-      var mapping_route  = "<?php echo $config->dbpedia->i18n->mapping->route; ?>"    ;
-      var template_alias = "<?php echo $config->wikipedia->wiki->template->alias; ?>"    ;
-      var redirect_alias = "<?php echo $config->wikipedia->wiki->redirect->alias; ?>"    ;
+      var mapping_alias  = "<?php echo $language['mappingAlias']; ?>"         ;
+      var mapping_route  = "<?php echo $language['mappingRoute']; ?>"    ;
+      var template_alias = "<?php echo $language['wikipediaTemplateAlias']; ?>"    ;
+      
+      var redirect_alias = "<?php echo 'REDIRECT'; ?>"    ;
       var lang_parameter = "<?php echo $_GET['lang'];?>"   ;
     </script>
     
     <?php
-      if(isset($_GET["lang"]))
+   
+      if(isset($_GET["lang"])&& $language!=null)
     foreach($config->cdn->js->url as $jsUrl) {
         echo '<script type="text/javascript" src="'.$jsUrl.'"></script>';
         }

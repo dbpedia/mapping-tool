@@ -25,7 +25,31 @@ Ext.onReady(function(){
             direction: "ASC"
         }
     }); // eof wikipediaTemplatesStore
-
+    var dbPediaLanguagesStore = new Ext.data.JsonStore({
+         url: Ext.HTTP_SERVICE_URL + '/api.php'
+        ,baseParams: {
+            action: 'languages',
+            lang:   lang_parameter
+        }
+        
+        ,fields: [
+            {name:'name', mapping:'name'},
+            {name:'friendlyName', mapping:'friendlyName'}
+        ]
+        ,root: 'languages'
+        ,autoLoad : true
+        ,sortInfo:{
+            field: "name",
+            direction: "ASC"
+        }
+        ,listeners: {
+                load: {
+                        fn: function() {
+                                Ext.getCmp('langName').setValue(lang_parameter);
+                        }
+                }
+        },
+    }); // eof wikipediaTemplatesStore
     // Ext JS autocompletion field for the Wikipedia Templates
     var autoCompleteTemplates = new Ext.form.ComboBox({
            id: 'templatename'
@@ -56,6 +80,42 @@ Ext.onReady(function(){
               ,scope: this
           }
     }); // eof autoCompleteTemplates
+
+
+
+    var languagesMenu = new Ext.form.ComboBox({
+           id: 'langName'
+          ,tpl: '<tpl for="."><div ext:qtip="{name}" class="x-combo-list-item">{friendlyName}</div></tpl>'
+          ,store: dbPediaLanguagesStore
+          ,minChars: 1
+          ,editable:false
+          ,fieldLabel: 'Name:'
+          ,displayField:'friendlyName'
+          ,valueField:'name'
+          ,loadingText: 'Loading languages...'
+          ,forceSelection: true
+          ,lazyRender: true
+          //,typeAhead:true
+          ,valueNotFoundText: 'no language found...'
+          ,mode: 'local'
+          ,triggerAction: 'all'
+          ,emptyText: 'Select Language'
+          ,enableKeyEvents: true
+          ,width: 100
+          ,align: 'right'
+          ,grow: true
+          ,listeners: {
+              select: function(elem, evnt){
+                  //Click to switch language ;)
+                  var titles="";
+                  if(gup("titles"))titles="titles="+gup("titles")+"&";
+                  window.location.href = window.location.pathname + "?"+titles+"lang=" + Ext.getCmp('langName').getValue();
+              }
+              ,scope: this
+          }
+    }); // eof autoCompleteTemplates
+
+
 
     // tweaking the Ajax call for data loading
     // when pulling the ontology from DBpedia
@@ -1257,7 +1317,8 @@ Ext.onReady(function(){
         //closable: false,
         border: false,
         id: 'window',
-        tbar: [{
+        tbar: [
+        {
           xtype: 'button',
           text: 'sync ontology with MediaWiki',
           listeners: {
@@ -1303,7 +1364,8 @@ Ext.onReady(function(){
           }
         },'-',
         autoCompleteTemplates
-        ,{
+        ,
+        {
            xtype: 'button'
           ,text: 'load mapping'
           ,listeners: {
@@ -1312,7 +1374,7 @@ Ext.onReady(function(){
               //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
             }
           }
-        }],
+        },"->",languagesMenu],
         items: [
             new Ext.Panel({
                 title: 'Wikipedia properties',
@@ -1786,6 +1848,18 @@ Ext.onReady(function(){
 
     loadTemplates(requestedTemplate);
     Ext.getCmp('templatename').setValue(requestedTemplate);
-
+    //Ext.getCmp('langName').setValue(lang_parameter);
     win.show();
 }); // end of Ext.onReady()
+
+function gup ( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}

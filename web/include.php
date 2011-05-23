@@ -21,6 +21,10 @@ set_include_path(
     . get_include_path()
 );
 require_once __ROOT__ . '/lib/vendor/Zend/Loader/Autoloader.php';
+
+require_once __ROOT__ . '/lib/vendor/Tht/MediaWiki/Reader/Core.php';
+require_once __ROOT__ . '/lib/vendor/Tht/MediaWiki/DBpedia.php';
+
 $autoloader = Zend_Loader_Autoloader::getInstance();
 
 // register namespace for user library
@@ -34,7 +38,7 @@ require_once __ROOT__ . '/lib/vendor/doctrine/Doctrine.php';
 // register Doctrine ORM class loader
 spl_autoload_register(array('Doctrine', 'autoload'));
 spl_autoload_register(array('Doctrine', 'modelsAutoload'));
-$lang= $_GET["lang"];
+$lang= isset($_GET["lang"])?$_GET["lang"]:$_POST["lang"];
 
 // create config from scratch or cache
 // depending on ENVIRONMENT
@@ -53,12 +57,14 @@ if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'||isset($l
     if(isset($lang)){
 
      
-      if(!file_exists(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini')){
+ /*
+     if(!file_exists(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini')){
           $lang='en';
       }
+*/
     }
     else $lang='en';
-    $config->merge(new Zend_Config_Ini(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini', ENVIRONMENT));
+    //$config->merge(new Zend_Config_Ini(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini', ENVIRONMENT));
     $config->setReadOnly();
     $cache->save($config, $cacheID);
 
@@ -90,7 +96,7 @@ if(!($config->tool->enable->debug)){
 }
 
 Zend_Registry::set('logger', $logger);
-Zend_Registry::get('logger')->log("Test".$config->dbpedia->i18n->mapping->alias, 1);
+
 /**
 How To Use The Log
 
@@ -126,8 +132,11 @@ foreach($config->tool->parser->token as $key => $value){
 // define PREFIX
 define('PREFIX', $config->tool->prefix->PREFIX);
 
-
-
+ //initialize language aliases
+$wr = new Tht_MediaWiki_DBpedia($config->dbpedia->api->url);
+$language = $wr->getLanguageByName($lang);
+Zend_Registry::set('language', $language);
+//var_dump($language);
 
 // initialize Database settings
 // initialize Doctrine ORM with data
@@ -157,5 +166,4 @@ if($config->database->cache->apc){
 
 // load ORM models for autoloader
 Doctrine::loadModels(__ROOT__ . '/lib/models');
-
 

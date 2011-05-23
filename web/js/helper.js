@@ -68,7 +68,7 @@ App.loadWikipediaTemplate = function (title, wikiTemplateTreeRootNode, wikiTempl
             })
         );
     }
-    wikiTemplateTree.getRootNode().setText("Template:" + title);
+    wikiTemplateTree.getRootNode().setText(title);
     wikiTemplateTree.getRootNode().expand();
 }
 
@@ -90,24 +90,31 @@ App.extractPropertiesFromWikiMarkup = function(wikiMarkup){
         //Ext.Msg.alert('Info', 'no wiki markup found.');
         return false;
     }
-    
     // search for wiki properties
     var matches = wikiMarkup.match(/\{\{\{([A-Za-z\u00C0-\uFFFD_0-9 \-\/]+)(\||\<|\})/g);
     //console.debug(matches);
     
     // abort if no wiki properties found
     if(matches == undefined || matches == null){
+
+/*
         var local_expr= new RegExp("^\\s*#("+redirect_alias+"|redirect)\\s*:?\\s*\\[\\[([^\\]]+)\\]\\]", "gi")      ;
         var redirectPattern = local_expr; ///^\s*#redirect\s*:?\s*\[\[([^\]]+)\]\]/gi;
         var redirectTemplate = redirectPattern.exec(wikiMarkup);
+*/
         
         //Ext.Msg.confirm('Info', 'no wiki template properties found');
         
-        if(!redirectTemplate){
+ /*
+       if(!redirectTemplate){
+*/
             Ext.Msg.alert('Error', 'Could not load wikipedia template.');
             matches = new Array();
+/*
         }
+*/
         
+/*
         if(redirectTemplate && redirectTemplate[2]){
             
             // stop the flow of javascript with a native window
@@ -128,6 +135,7 @@ App.extractPropertiesFromWikiMarkup = function(wikiMarkup){
             }
             return;
         }
+*/
     }
     
     if(matches == null){
@@ -165,6 +173,28 @@ App.getMarkupByWikipediaAjaxRequest = function(title) {
         },
         success: function(json){
             if ( json ) {
+                if(json.redirect){
+                 var box=window.confirm('The Wikipedia template redirects to ' + json.redirect + '. Click OK to follow the redirect.');
+                 if(box==true){
+                     var box2 = window.confirm('Do you want to adopt the title of the target for your mapping? Click OK to adopt the title.');
+                     if(box2 == true){
+                          var lang_par;
+                          if(gup("lang"))lang_par="lang="+gup("lang")+"&";
+
+                          window.location.href = window.location.pathname + "?"+lang_par+"titles=" + encodeURI( json.redirect);
+
+                     }
+                     else
+                     {
+                           var wikiTemplateTree = Ext.getCmp('wikiTemplateTree');
+                           var wikiTemplateTreeRootNode = wikiTemplateTree.root;
+                           return App.loadWikipediaTemplate(json.redirect.replace(/Template\:/, ''), wikiTemplateTreeRootNode, wikiTemplateTree);
+
+
+
+                     }
+                 }
+                }
                 markup = json.templateMarkup;
 
                 return;

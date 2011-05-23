@@ -24,8 +24,9 @@ class Tht_Dml_RemoteValidator
                 </page>
             </mediawiki>
         ';
-	if($ns==Zend_Registry::get('config')->dbpedia->i18n->mapping->alias){
-		$route = Zend_Registry::get('config')->dbpedia->i18n->mapping->route;	
+   $lang = Zend_Registry::get('language');
+	if($ns==$lang["mappingAlias"]){
+		$route = $lang["mappingRoute"];	
 	}
         else switch($ns){
             case 'Mapping':
