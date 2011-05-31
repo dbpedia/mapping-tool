@@ -51,7 +51,7 @@ class Tht_MediaWiki_Wikipedia extends Tht_MediaWiki_Reader_Core
         return json_encode( $output );
     }
 
-    public function getSuggestedPagesByTitle($title)
+    public function getSuggestedTemplatesByTitle($title)
     {
         $getParameters = array(
             'action'    => 'opensearch',
@@ -59,6 +59,24 @@ class Tht_MediaWiki_Wikipedia extends Tht_MediaWiki_Reader_Core
             'format'    => 'json',
             'search'    => $title,
             'namespace' => Zend_Registry::get('config')->wikipedia->ns->templates
+        );
+
+        $this->client->resetParameters();
+        $this->client->setParameterGet($getParameters);
+        $response = $this->client->request(Zend_Http_Client::GET);
+
+        return $this->_getSuggestedPagesFromJsonPageList($response->getBody());
+    }
+
+
+    public function getSuggestedPagesByTitle($title)
+    {
+        $getParameters = array(
+            'action'    => 'opensearch',
+            'limit'     => Zend_Registry::get('config')->wikipedia->autocomplete->limit,
+            'format'    => 'json',
+            'search'    => $title,
+            
         );
 
         $this->client->resetParameters();

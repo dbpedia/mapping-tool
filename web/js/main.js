@@ -7,13 +7,16 @@ Ext.QuickTips.init();
 // start the app
 Ext.onReady(function(){
 
+
+
     // Ext JS store to hold the list of matching template names
     // for the autocompletion field for the Wikipedia templates
     var wikipediaTemplatesStore = new Ext.data.JsonStore({
          url: Ext.HTTP_SERVICE_URL + '/api.php'
         ,baseParams: {
-            action: 'autocomplete',
-            lang:   lang_parameter
+            action: 'template_autocomplete',
+            lang:   lang_parameter ,
+            implemented: false
         }
         ,totalProperty: 'total'
         ,fields: [
@@ -25,6 +28,30 @@ Ext.onReady(function(){
             direction: "ASC"
         }
     }); // eof wikipediaTemplatesStore
+
+
+        // Ext JS store to hold the list of matching articles names
+    // for the autocompletion field for the Wikipedia articles
+    var wikipediaArticlesStore = new Ext.data.JsonStore({
+         url: Ext.HTTP_SERVICE_URL + '/api.php'
+        ,baseParams: {
+            action: 'article_autocomplete',
+            lang:   lang_parameter
+        }
+        ,totalProperty: 'total'
+        ,fields: [
+            {name:'site', mapping:'site'}
+        ]
+        ,root: 'data'
+        ,sortInfo:{
+            field: "site",
+            direction: "ASC"
+        }
+    }); // eof wikipediaArticlesStore
+
+        // Ext JS store to hold the list of matching articles names
+    // for the autocompletion field for the DBpedia articles
+
     var dbPediaLanguagesStore = new Ext.data.JsonStore({
          url: Ext.HTTP_SERVICE_URL + '/api.php'
         ,baseParams: {
@@ -49,7 +76,7 @@ Ext.onReady(function(){
                         }
                 }
         },
-    }); // eof wikipediaTemplatesStore
+    }); // eof dbpediaLanguagesStore
     // Ext JS autocompletion field for the Wikipedia Templates
     var autoCompleteTemplates = new Ext.form.ComboBox({
            id: 'templatename'
@@ -76,11 +103,54 @@ Ext.onReady(function(){
                   if(evnt.getKey() == evnt.ENTER){
                       loadTemplates(Ext.getCmp('templatename').getValue());
                   }
+
+              }
+              ,click: function(el,e){
+               
               }
               ,scope: this
           }
     }); // eof autoCompleteTemplates
 
+
+
+
+    // Ext JS autocompletion field for the Wikipedia Articles
+    var autoCompleteArticles = new Ext.form.ComboBox({
+           id: 'articleName'
+          ,tpl: '<tpl for="."><div ext:qtip="{site}" class="x-combo-list-item">{site}</div></tpl>'
+          ,store: wikipediaArticlesStore
+          ,minChars: 1
+          ,fieldLabel: 'Site:'
+          ,displayField: 'site'
+          ,loadingText: 'articles loading'
+          ,forceSelection: false
+          ,lazyRender: true
+          //,typeAhead:true
+          ,valueNotFoundText: 'no article found...'
+          ,mode: 'remote'
+          ,triggerAction: 'all'
+          ,emptyText: 'Article example'
+          ,enableKeyEvents: true
+          ,width: 300
+          ,selectOnFocus: true,
+      
+        getListParent: function() {
+            return this.el.up('.x-menu');
+        }
+          ,listeners: {
+              keyup: function(elem, evnt){
+                  // if ENTER key is pressed start
+                  // the AJAX request to retrieve matching
+                  // templates
+                  if(evnt.getKey() == evnt.ENTER){
+                      window.open("http://mappings.dbpedia.org/server/extraction/"+lang_parameter+"/extract?format=Trix&title="+Ext.getCmp('articleName').getValue());
+
+                  }
+              }
+              ,scope: this
+          }
+    }); // eof autoCompleteArticles
 
 
     var languagesMenu = new Ext.form.ComboBox({
@@ -113,7 +183,7 @@ Ext.onReady(function(){
               }
               ,scope: this
           }
-    }); // eof autoCompleteTemplates
+    }); // eof autoCompletelanguages
 
 
 
@@ -1301,6 +1371,48 @@ Ext.onReady(function(){
         root: dbpediaMappingRoot
     });
 
+   var implemented = new Ext.form.Checkbox(
+   	{
+         id: 'implemented',
+         style  : 'margin-left: 3px; ',
+         boxLabel :'mapped only',
+         listeners: {
+             check: function(el, checked){
+                wikipediaTemplatesStore.setBaseParam('implemented',checked);
+             }
+         }
+   	}
+   );
+      var examplePagesMenu = new Ext.menu.Menu({
+              style: {
+            overflow: 'visible'     // For the Combo popup
+        },
+           items: [
+                 new Ext.Panel({
+                     title: 'Wikipedia article test',
+                     width: 300,
+                     layout: 'anchor',
+                     region: 'west',
+                     border: true,
+                     split: true,
+                     items: [
+                         autoCompleteArticles
+                     ]
+                 }),
+                  {
+                     xtype: 'button'
+                     ,text: 'load page'
+                     ,listeners:
+                     {
+                        click: function(e){
+                          window.open("http://mappings.dbpedia.org/server/extraction/"+lang_parameter+"/extract?format=Trix&title="+Ext.getCmp('articleName').getValue());
+
+                         //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
+                        }
+                     }
+                 }
+              ]
+     });
     // define main window containing the
     // tools widgets
     var win = new Ext.Window({
@@ -1363,18 +1475,43 @@ Ext.onReady(function(){
             }
           }
         },'-',
+
         autoCompleteTemplates
-        ,
+        , implemented   ,
+
         {
-           xtype: 'button'
+            style  : 'margin-left: 3px; ',
+           xtype: 'splitbutton'
           ,text: 'load mapping'
+          ,menu : {
+                items: [
+                    implemented
+                ]
+          }
           ,listeners: {
             click: function(e){
               loadTemplates(Ext.getCmp('templatename').getValue());
               //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
             }
           }
-        },"->",languagesMenu],
+        },  '-',
+                {
+           menu: examplePagesMenu
+          ,text: 'Test an article'
+
+        }    ,
+
+         '-',
+
+
+        "->",languagesMenu
+
+
+
+
+
+
+        ],
         items: [
             new Ext.Panel({
                 title: 'Wikipedia properties',
@@ -1848,7 +1985,6 @@ Ext.onReady(function(){
 
     loadTemplates(requestedTemplate);
     Ext.getCmp('templatename').setValue(requestedTemplate);
-    //Ext.getCmp('langName').setValue(lang_parameter);
     win.show();
 }); // end of Ext.onReady()
 

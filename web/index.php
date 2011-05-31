@@ -35,7 +35,7 @@ function curPageURL() {
 
           
     <script type="text/javascript">
-      var requestedTemplate = "<?php echo Tht_Helper_Parameter::hasGET('titles') ? Tht_Helper_Parameter::GET('titles') : "Infobox company"; ?>";
+      var requestedTemplate = "<?php echo Tht_Helper_Parameter::hasGET('titles') ? Tht_Helper_Parameter::GET('titles') : $rand_page; ?>";
       var mapping_alias  = "<?php echo $language['mappingAlias']; ?>"         ;
       var mapping_route  = "<?php echo $language['mappingRoute']; ?>"    ;
       var template_alias = "<?php echo $language['wikipediaTemplateAlias']; ?>"    ;

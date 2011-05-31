@@ -67,7 +67,87 @@ class Tht_MediaWiki_DBpedia extends Tht_MediaWiki_Reader_Core
 
         return $templateList;
     }
-    
+
+
+
+    public function get_RandomPages()
+    {
+       $lang=Zend_Registry::get('language');
+       $getParams = array(
+            'action' => 'query',
+            'list'   => 'random',
+            'rnlimit' => 1,
+            'rnnamespace' => $lang['namespace'],
+            'format' => 'json'
+  
+        );
+
+       $this->client->resetParameters();
+       $this->client->setParameterGet($getParams);
+       $response = $this->client->request(Zend_Http_Client::GET);
+       $parsed_response = json_decode($response->getBody(), true);
+
+
+       
+
+
+       
+      $pages =    $parsed_response["query"]["random"];
+      $page = $pages[0];
+
+      $alias = str_replace("_"," ",$lang["mappingAlias"]);
+
+      return   str_replace($alias, $lang['wikipediaTemplateAlias'], $page['title']);
+    }
+
+
+
+
+    public function getSuggestedPagesByTitle($title)
+    {
+         $lang=Zend_Registry::get('language');
+        $getParameters = array(
+            'action'    => 'opensearch',
+            'limit'     => Zend_Registry::get('config')->wikipedia->autocomplete->limit,
+            'format'    => 'json',
+            'search'    => $title,
+            'namespace' => $lang['namespace']
+            
+        );
+
+        $this->client->resetParameters();
+        $this->client->setParameterGet($getParameters);
+        $response = $this->client->request(Zend_Http_Client::GET);
+
+        return $this->_getSuggestedPagesFromJsonPageList($response->getBody());
+    }
+
+    protected function _getSuggestedPagesFromJsonPageList($json)
+    {
+      $lang=Zend_Registry::get('language');
+        $json = json_decode($json, true);
+
+        if(!isset($json[1])){
+            return json_encode(array());
+        }
+
+        $out = array();
+       $alias = str_replace("_"," ",$lang["mappingAlias"]);
+        foreach($json[1] as $site){
+         
+
+            ;
+            $out[] = array('site' => str_replace($alias, $lang['wikipediaTemplateAlias'], $site));
+        }
+
+        return json_encode(
+            array(
+                'total' => count($out),
+                'data' => $out
+            )
+        );
+    }
+
     
     /**
     * returns a list of all pages with content of

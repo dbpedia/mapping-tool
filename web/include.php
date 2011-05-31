@@ -132,11 +132,16 @@ foreach($config->tool->parser->token as $key => $value){
 // define PREFIX
 define('PREFIX', $config->tool->prefix->PREFIX);
 
- //initialize language aliases
 $wr = new Tht_MediaWiki_DBpedia($config->dbpedia->api->url);
+ //initialize language aliases
+
 $language = $wr->getLanguageByName($lang);
 Zend_Registry::set('language', $language);
 //var_dump($language);
+
+//get a random mapping, if needed
+
+$rand_page = $wr->get_RandomPages();
 
 // initialize Database settings
 // initialize Doctrine ORM with data
