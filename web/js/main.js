@@ -959,12 +959,16 @@ Ext.onReady(function(){
                 text: 'reload',
                 listeners: {
                     click: function(e){
-                        var templateName = Ext.getCmp('templatename').getValue();
-                        if(templateName == undefined || templateName == ''){
-                            Ext.Msg.alert('no template defined to load');
-                            return false;
-                        }
-                        loadTemplates(Ext.getCmp('templatename').getValue());
+                        Ext.MessageBox.confirm('Reload mapping', 'All your unsaved changes will be lost. Do you want to reload this mapping?', function(btn){
+                        if (btn == 'yes'){
+                          var templateName = Ext.getCmp('templatename').getValue();
+                          if(templateName == undefined || templateName == ''){
+                              Ext.Msg.alert('no template defined to load');
+                              return false;
+                          }
+                          loadTemplates(Ext.getCmp('templatename').getValue());
+                          }
+                      })
                     }
                     /*
                     click: function(e){
@@ -1219,21 +1223,25 @@ Ext.onReady(function(){
         },
         root: dbpediaMappingRoot
     });
+    
+    // define main window to be behind login window when it is visible
+    var mainWindowGroup = new Ext.WindowGroup;
+    mainWindowGroup.zseed = 8000;
 
     // define main window containing the
     // tools widgets
     var win = new Ext.Window({
+        manager: mainWindowGroup,  // define main window to be behind login window
         width: 1000,
         height: 600,
         closeAction: 'hide',
         //autoDestroy: false,
         //plain: true,
         layout: 'border',
-        title: 'DBpedia Ontology Mapper',
+        title: 'DBpedia MappingTool',
         resizeable: true,
         autoScroll: true,
         closable: false,
-        //closable: false,
         border: false,
         id: 'window',
         tbar: [{
@@ -1241,7 +1249,7 @@ Ext.onReady(function(){
           text: 'sync ontology with MediaWiki',
           listeners: {
             click: function(e){
-              Ext.Msg.prompt('Password', 'Please enter password:', function(btn, text){
+              Ext.Msg.prompt('Password', 'Please enter sync password:', function(btn, text){
                   if (btn == 'ok'){
                       // Load Ajax response in directly in Ext
                       maskingAjax.request({
@@ -1290,6 +1298,37 @@ Ext.onReady(function(){
               //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
             }
           }
+        }
+        // BEGIN edit by Max Jakob (max.jakob@fu-berlin.de)
+        ,{
+           xtype: 'tbfill'
+        }
+        ,{
+           xtype: 'button'
+          ,text: 'Logout'
+          ,listeners: {
+             click: function(e){
+              Ext.MessageBox.confirm('Logout', 'Do you want to log out?', function(btn){
+                if (btn == 'yes'){
+                  $.ajax({
+                    url: Ext.HTTP_SERVICE_URL + '/api/login/logout.php',
+                    async: false,
+                    success: function(json){
+                      win.disable();
+                      loginWindow.show();
+                    },
+                    error: function(XMLHttpRequest, textStatus, errorThrown){
+                      Ext.Msg.alert('ERROR', 'was not able to log out!!!');
+                    }
+                  });
+                }
+              })
+            }
+              
+            
+            
+          }
+        // END edit by Max Jakob (max.jakob@fu-berlin.de)
         }],
         items: [
             new Ext.Panel({
@@ -1756,9 +1795,106 @@ Ext.onReady(function(){
     }
 
 
-
     loadTemplates(requestedTemplate);
     Ext.getCmp('templatename').setValue(requestedTemplate);
+	
+	
+	////////////////////////////////////////////////////////////
+    // BEGIN edit by Max Jakob (max.jakob@fu-berlin.de)
+    ////////////////////////////////////////////////////////////
+    
+    // Login form
+    var loginForm = new Ext.form.FormPanel({
+        frame:true,
+        width:260,     
+        labelWidth:60,         
+        defaults: {
+            width: 165,
+        },
+        items: [
+            new Ext.form.TextField({
+                id:"username",
+                fieldLabel:"Username",
+                allowBlank:false,
+                blankText:"Please enter your username!"
+            }),
+            new Ext.form.TextField({
+                id:"password",
+                fieldLabel:"Password",
+                inputType: 'password',
+                allowBlank:false,
+                blankText:"Please enter your password!"
+            })
+        ],
+        defaultButton: 0,
+        buttons: [{
+            text: 'Login',                         
+            handler: submitLogin
+        }],
+        keys: [{
+            key: [Ext.EventObject.ENTER],
+            handler: submitLogin
+        }]
+    });
 
-    win.show();
+    function submitLogin(){
+        if(loginForm.getForm().isValid()){
+            loginForm.getForm().submit({
+                url: Ext.HTTP_SERVICE_URL + '/api/login/login.php',
+                waitMsg: 'Logging in...',
+                success: function(response, opts) {
+                    loginWindow.hide();                            
+                    win.enable();
+                },
+                failure: function(response, opts) {
+                    Ext.Msg.show({
+                        title: 'Error',
+                        msg: opts.result.message,
+                        buttons: Ext.Msg.OK,
+                        icon: Ext.MessageBox.ERROR
+                    });
+                }
+            });
+        }
+    }
+    
+    // Login window
+    var loginWindow = new Ext.Window({
+        title: 'Login: DBpedia MappingTool',
+        layout: 'fit',                 
+        height: 140,
+        width: 260,                            
+        closable: false,
+        resizable: false,                              
+        draggable: true,
+        items: [loginForm]
+    });
+ 
+    // check for login
+    $.ajax({
+      url: Ext.HTTP_SERVICE_URL + '/api/login/checkstatus.php',
+      async: true,
+      success: function(json){
+        var status = Ext.util.JSON.decode(json);
+        if(status.logged_in == true){
+          win.show();
+        }
+        else {
+          win.show();
+          win.disable();
+          loginWindow.show();
+        }
+      },
+      failure: function(){
+        win.show();
+        win.disable();
+        loginWindow.show();
+      }
+    });
+
+
+    ////////////////////////////////////////////////////////////
+    // END edit by Max Jakob (max.jakob@fu-berlin.de)
+    ////////////////////////////////////////////////////////////
+
 }); // end of Ext.onReady()

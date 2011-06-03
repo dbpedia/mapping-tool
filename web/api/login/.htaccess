@@ -1,0 +1,4 @@
+Options +FollowSymLinks
+Order Deny,Allow
+# login scripts must be visible
+allow from all

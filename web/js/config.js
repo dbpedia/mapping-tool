@@ -15,7 +15,7 @@ function isLocalUrl(url){
 if(isLocalUrl(Ext.HTTP_SERVICE_URL)) {
     Ext.BLANK_IMAGE_URL  = 'js/lib/extjs/resources/images/default/s.gif';
 } else {
-    Ext.BLANK_IMAGE_URL  = 'http://extjs.cachefly.net/ext-3.3.1/resources/images/default/s.gif';
+    Ext.BLANK_IMAGE_URL  = 'http://extjs.cachefly.net/ext-3.2.1/resources/images/default/s.gif';
 }
 
 //Ext.useShims = true;

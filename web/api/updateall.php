@@ -3,6 +3,8 @@ if(!defined('__INCLUDE_LOADED__')){
     die('please include "include.php" for functionality');
 }
 
+error_reporting(E_ALL);
+
 // check for key parameter
 $key = Tht_Helper_Parameter::REQUEST('key', false);
 if(!$key){
@@ -14,13 +16,14 @@ if(!$key){
     die();
 }
 
+session_start();
 // check for valid password
 if(   $key !== Zend_Registry::get('config')->sync->ontology->password
    && Zend_Registry::get('config')->sync->ontology->usePassword){
     Tht_Helper_Header::JS();
     Tht_Helper_Header::badRequest();
     echo json_encode(array(
-        'message' => 'invalid key'
+        'message' => 'invalid password, not syncronising'
     ));
     die();
 }
@@ -84,6 +87,7 @@ if( !Zend_Registry::get('config')->dbpedia->cache->api->enable || !($templates =
         $cache->save($templates, $cacheId);
     }
 }
+
 
 //echo '<pre>';
 //print_r($classTemplates);

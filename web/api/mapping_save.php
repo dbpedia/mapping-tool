@@ -35,14 +35,18 @@ if(Tht_Helper_Parameter::hasPOST('titles') && Tht_Helper_Parameter::hasPOST('tex
         Tht_Helper_Parameter::POST('titles'),
         Tht_Helper_Parameter::POST('text')
     );
-    
+
+    session_start();
     $mwuser = new Tht_MediaWiki_User(
-        Zend_Registry::get('config')->dbpedia->user->name,
-        Zend_Registry::get('config')->dbpedia->user->password
+       $_SESSION["username"],
+       $_SESSION["password"]
     );
-    
+
+    //Zend_Registry::get('logger')->log("(mapping_save.php) user name is set to: ".$_SESSION["username"], 5);
+
     $apiUrl = Zend_Registry::get('config')->dbpedia->api->url;
     $mwd = new Tht_MediaWiki_DBpedia($apiUrl);
+    
     $mwd->login($mwuser);
     
     $mwd->saveDocument($document);

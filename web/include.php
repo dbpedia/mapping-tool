@@ -35,6 +35,7 @@ require_once __ROOT__ . '/lib/vendor/doctrine/Doctrine.php';
 spl_autoload_register(array('Doctrine', 'autoload'));
 spl_autoload_register(array('Doctrine', 'modelsAutoload'));
 
+
 // create config from scratch or cache
 // depending on ENVIRONMENT
 $frontendOptions = array(
@@ -47,13 +48,15 @@ $backendOptions  = array(
 $cache = Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
 $cacheID = 'config';
 if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'){
-    $config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT);
-    $cache->save($config, $cacheID);
+	try {
+		$config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT);
+
+	} catch(Exception $e){
+		var_dump($e);
+	}
+	$cache->save($config, $cacheID);
 }
 Zend_Registry::set('config', $config);
-
-
-
 
 // adding a logger to registry
 $format    = '%timestamp% %priorityName% (%priority%): %message%' . PHP_EOL;
@@ -111,7 +114,6 @@ foreach($config->tool->parser->token as $key => $value){
 
 // define PREFIX
 define('PREFIX', $config->tool->prefix->PREFIX);
-
 
 
 

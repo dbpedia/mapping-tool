@@ -4,7 +4,10 @@
  * run wikipedia reader
  */
 
-require_once 'include.php';
+ if(!defined('__INCLUDE_LOADED__')){
+    die('please include "include.php" for functionality');
+    //require_once 'include.php';
+}
 
 if (Tht_Helper_Parameter::hasGET('titles')){
     $apiUrl = Zend_Registry::get('config')->wikipedia->api->url;

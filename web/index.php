@@ -21,5 +21,6 @@ echo '<?xml version="1.0" encoding="utf-8"?>';
     <?php foreach($config->cdn->js->url as $jsUrl) : ?>
         <script type="text/javascript" src="<?php echo $jsUrl; ?>"></script>
     <?php endforeach; ?>
+    
   </body>
 </html>

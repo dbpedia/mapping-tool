@@ -84,7 +84,7 @@ App.extractPropertiesFromWikiMarkup = function(wikiMarkup){
     }
     
     // search for wiki properties
-    var matches = wikiMarkup.match(/\{\{\{([a-zA-Z_0-9 \-\/]+)(\||\<|\})/g);
+    var matches = wikiMarkup.match(/\{\{\{([a-zA-Z_0-9 \-]+)(\||\<|\})/g);
     //console.debug(matches);
     
     // abort if no wiki properties found
@@ -126,7 +126,7 @@ App.extractPropertiesFromWikiMarkup = function(wikiMarkup){
     // filter each property for invalid characters
     // and add it to the output array
     Ext.each(matches, function(){
-        var property = this.match(/[a-zA-Z_0-9 \-\/]+/g);
+        var property = this.match(/[a-zA-Z_0-9 \-]+/g);
         out.push(property[0]);
     });
     

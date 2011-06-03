@@ -7,7 +7,9 @@
  * + fetching pageids|namespace to refresh|update ontology
  */
 
-require_once 'include.php';
+if(!defined('__INCLUDE_LOADED__')){
+    require_once 'include.php';
+}
 
 $defaultValue = null;
 switch(Tht_Helper_Parameter::REQUEST('action', $defaultValue)){
@@ -112,7 +114,7 @@ switch(Tht_Helper_Parameter::REQUEST('action', $defaultValue)){
     case 'examples':
         require_once 'api/exampleArticles.php';
         break;
-    
+   
     // no given action
     default:
         Tht_Helper_Header::badRequest();
