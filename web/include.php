@@ -21,6 +21,10 @@ set_include_path(
     . get_include_path()
 );
 require_once __ROOT__ . '/lib/vendor/Zend/Loader/Autoloader.php';
+
+require_once __ROOT__ . '/lib/vendor/Tht/MediaWiki/Reader/Core.php';
+require_once __ROOT__ . '/lib/vendor/Tht/MediaWiki/DBpedia.php';
+
 $autoloader = Zend_Loader_Autoloader::getInstance();
 
 // register namespace for user library
@@ -34,7 +38,7 @@ require_once __ROOT__ . '/lib/vendor/doctrine/Doctrine.php';
 // register Doctrine ORM class loader
 spl_autoload_register(array('Doctrine', 'autoload'));
 spl_autoload_register(array('Doctrine', 'modelsAutoload'));
-
+$lang= isset($_GET["lang"])?$_GET["lang"]:$_POST["lang"];
 
 // create config from scratch or cache
 // depending on ENVIRONMENT
@@ -47,16 +51,30 @@ $backendOptions  = array(
 );
 $cache = Zend_Cache::factory('Core', 'File', $frontendOptions, $backendOptions);
 $cacheID = 'config';
-if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'){
-	try {
-		$config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT);
+if(!($config = $cache->load($cacheID)) || ENVIRONMENT !== 'production'||isset($lang)){
 
-	} catch(Exception $e){
-		var_dump($e);
-	}
-	$cache->save($config, $cacheID);
+    $config = new Zend_Config_Ini(__ROOT__ . '/config/config.ini', ENVIRONMENT,true);
+    if(isset($lang)){
+
+    /*
+    if(!file_exists(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini')){
+        $lang='en';
+    }
+    */
+
+    } else {
+        $lang='en';
+    }
+    //$config->merge(new Zend_Config_Ini(__ROOT__ . '/config/i18n/'.$lang.'/lang.ini', ENVIRONMENT));
+    $config->setReadOnly();
+    $cache->save($config, $cacheID);
+
 }
+
 Zend_Registry::set('config', $config);
+
+
+
 
 // adding a logger to registry
 $format    = '%timestamp% %priorityName% (%priority%): %message%' . PHP_EOL;
@@ -115,7 +133,16 @@ foreach($config->tool->parser->token as $key => $value){
 // define PREFIX
 define('PREFIX', $config->tool->prefix->PREFIX);
 
+$wr = new Tht_MediaWiki_DBpedia($config->dbpedia->api->url);
+ //initialize language aliases
 
+$language = $wr->getLanguageByName($lang);
+Zend_Registry::set('language', $language);
+//var_dump($language);
+
+//get a random mapping, if needed
+
+$rand_page = $wr->get_RandomPages();
 
 // initialize Database settings
 // initialize Doctrine ORM with data
