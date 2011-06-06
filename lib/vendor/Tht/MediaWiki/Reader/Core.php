@@ -75,6 +75,27 @@ abstract class Tht_MediaWiki_Reader_Core
         //Zend_Registry::get('logger')->log(print_r($response, true), 5);
     }
 
+    public function isValidLogin(Tht_MediaWiki_IUser $user)
+    {
+        $this->user = $user;
+
+        // fetch login token and set cookie
+        $postParams = array(
+            'action'     => 'login',
+            'lgname'     => $this->user->getUsername(),
+            'lgpassword' => $this->user->getPassword(),
+            'format'     => 'json'
+        );
+        $this->client->resetParameters();
+        $this->client->setParameterPost( $postParams );
+        $response = $this->client->request(Zend_Http_Client::POST);
+
+        // fetch login token from body
+        $parsed_json = json_decode($response->getBody(), true);
+        $loginResponse = $parsed_json['login'];
+
+        return array_key_exists('lgtoken', $loginResponse);
+    }
 
     public function getEditToken(Tht_MediaWiki_IDocument $document)
     {
