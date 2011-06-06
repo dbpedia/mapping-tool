@@ -1501,20 +1501,16 @@ Ext.onReady(function(){
             }
           }
         },  '-',
-                {
+        {
            menu: examplePagesMenu
           ,text: 'Test an article'
 
-        }    ,
+        } , '-',
 
-         '-',
-
-        "->",languagesMenu
+        "->", languagesMenu
 
 
 
-        ],
-        }
         // BEGIN edit by Max Jakob (max.jakob@fu-berlin.de)
         ,{
            xtype: 'tbfill'
