@@ -34,11 +34,21 @@ $autoloader->registerNamespace('Tht');
 //$autoloader->registerNamespace('Doctrine');
 
 // load Doctrine Object Relational Mapper
+
 require_once __ROOT__ . '/lib/vendor/doctrine/Doctrine.php';
 // register Doctrine ORM class loader
 spl_autoload_register(array('Doctrine', 'autoload'));
 spl_autoload_register(array('Doctrine', 'modelsAutoload'));
-$lang= isset($_GET["lang"])?$_GET["lang"]:$_POST["lang"];
+
+if(isset($_GET["lang"])) {
+    $lang = $_GET["lang"];
+}
+else if(isset($_POST["lang"])) {
+    $lang = $_POST["lang"];
+}
+//else {
+//    echo "lang not set!";
+//}
 
 // create config from scratch or cache
 // depending on ENVIRONMENT
