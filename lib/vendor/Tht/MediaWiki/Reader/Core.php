@@ -176,7 +176,8 @@ abstract class Tht_MediaWiki_Reader_Core
             'titles' => $title,
             'format' => 'json',
             'rvprop' => 'ids|timestamp|content',
-            'indexpageids' => 1
+            'indexpageids' => 1,
+            'redirects'=>true
         );
 
         $this->client->resetParameters();
@@ -191,7 +192,6 @@ abstract class Tht_MediaWiki_Reader_Core
         };
 
         $page     = $parsed_response['query']['pages'][($parsed_response['query']['pageids'][0])];
-        
         $revision = $page['revisions'][0];
 
         $document = new Tht_MediaWiki_Document();
@@ -203,7 +203,12 @@ abstract class Tht_MediaWiki_Reader_Core
         $document->setLastrevid($revision['revid']);
         $document->setBasetimestamp($revision['timestamp']);
         $document->setText($revision['*']);
-        
+
+        if(isset($parsed_response['query']['redirects'])){
+            $redirect = $parsed_response['query']['redirects'][0];
+            $document->setRedirects($redirect['to']);
+        }
+        else $document->setRedirects(null);
         return $document;
     }
 

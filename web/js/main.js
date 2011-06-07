@@ -7,12 +7,16 @@ Ext.QuickTips.init();
 // start the app
 Ext.onReady(function(){
 
+
+
     // Ext JS store to hold the list of matching template names
     // for the autocompletion field for the Wikipedia templates
     var wikipediaTemplatesStore = new Ext.data.JsonStore({
          url: Ext.HTTP_SERVICE_URL + '/api.php'
         ,baseParams: {
-            action: 'autocomplete'
+            action: 'template_autocomplete',
+            lang:   lang_parameter ,
+            implemented: false
         }
         ,totalProperty: 'total'
         ,fields: [
@@ -25,6 +29,54 @@ Ext.onReady(function(){
         }
     }); // eof wikipediaTemplatesStore
 
+
+        // Ext JS store to hold the list of matching articles names
+    // for the autocompletion field for the Wikipedia articles
+    var wikipediaArticlesStore = new Ext.data.JsonStore({
+         url: Ext.HTTP_SERVICE_URL + '/api.php'
+        ,baseParams: {
+            action: 'article_autocomplete',
+            lang:   lang_parameter
+        }
+        ,totalProperty: 'total'
+        ,fields: [
+            {name:'site', mapping:'site'}
+        ]
+        ,root: 'data'
+        ,sortInfo:{
+            field: "site",
+            direction: "ASC"
+        }
+    }); // eof wikipediaArticlesStore
+
+        // Ext JS store to hold the list of matching articles names
+    // for the autocompletion field for the DBpedia articles
+
+    var dbPediaLanguagesStore = new Ext.data.JsonStore({
+         url: Ext.HTTP_SERVICE_URL + '/api.php'
+        ,baseParams: {
+            action: 'languages',
+            lang:   lang_parameter
+        }
+        
+        ,fields: [
+            {name:'name', mapping:'name'},
+            {name:'friendlyName', mapping:'friendlyName'}
+        ]
+        ,root: 'languages'
+        ,autoLoad : true
+        ,sortInfo:{
+            field: "name",
+            direction: "ASC"
+        }
+        ,listeners: {
+                load: {
+                        fn: function() {
+                                Ext.getCmp('langName').setValue(lang_parameter);
+                        }
+                }
+        },
+    }); // eof dbpediaLanguagesStore
     // Ext JS autocompletion field for the Wikipedia Templates
     var autoCompleteTemplates = new Ext.form.ComboBox({
            id: 'templatename'
@@ -51,10 +103,89 @@ Ext.onReady(function(){
                   if(evnt.getKey() == evnt.ENTER){
                       loadTemplates(Ext.getCmp('templatename').getValue());
                   }
+
+              }
+              ,click: function(el,e){
+               
               }
               ,scope: this
           }
     }); // eof autoCompleteTemplates
+
+
+
+
+    // Ext JS autocompletion field for the Wikipedia Articles
+    var autoCompleteArticles = new Ext.form.ComboBox({
+           id: 'articleName'
+          ,tpl: '<tpl for="."><div ext:qtip="{site}" class="x-combo-list-item">{site}</div></tpl>'
+          ,store: wikipediaArticlesStore
+          ,minChars: 1
+          ,fieldLabel: 'Site:'
+          ,displayField: 'site'
+          ,loadingText: 'articles loading'
+          ,forceSelection: false
+          ,lazyRender: true
+          //,typeAhead:true
+          ,valueNotFoundText: 'no article found...'
+          ,mode: 'remote'
+          ,triggerAction: 'all'
+          ,emptyText: 'Article example'
+          ,enableKeyEvents: true
+          ,width: 300
+          ,selectOnFocus: true,
+      
+        getListParent: function() {
+            return this.el.up('.x-menu');
+        }
+          ,listeners: {
+              keyup: function(elem, evnt){
+                  // if ENTER key is pressed start
+                  // the AJAX request to retrieve matching
+                  // templates
+                  if(evnt.getKey() == evnt.ENTER){
+                      window.open("http://mappings.dbpedia.org/server/extraction/"+lang_parameter+"/extract?format=Trix&title="+Ext.getCmp('articleName').getValue());
+
+                  }
+              }
+              ,scope: this
+          }
+    }); // eof autoCompleteArticles
+
+
+    var languagesMenu = new Ext.form.ComboBox({
+           id: 'langName'
+          ,tpl: '<tpl for="."><div ext:qtip="{name}" class="x-combo-list-item">{friendlyName}</div></tpl>'
+          ,store: dbPediaLanguagesStore
+          ,minChars: 1
+          ,editable:false
+          ,fieldLabel: 'Name:'
+          ,displayField:'friendlyName'
+          ,valueField:'name'
+          ,loadingText: 'Loading languages...'
+          ,forceSelection: true
+          ,lazyRender: true
+          //,typeAhead:true
+          ,valueNotFoundText: 'no language found...'
+          ,mode: 'local'
+          ,triggerAction: 'all'
+          ,emptyText: 'Select Language'
+          ,enableKeyEvents: true
+          ,width: 100
+          ,align: 'right'
+          ,grow: true
+          ,listeners: {
+              select: function(elem, evnt){
+                  //Click to switch language ;)
+                  var titles="";
+                  if(gup("titles"))titles="titles="+gup("titles")+"&";
+                  window.location.href = window.location.pathname + "?"+titles+"lang=" + Ext.getCmp('langName').getValue();
+              }
+              ,scope: this
+          }
+    }); // eof autoCompletelanguages
+
+
 
     // tweaking the Ajax call for data loading
     // when pulling the ontology from DBpedia
@@ -88,6 +219,7 @@ Ext.onReady(function(){
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
             action: 'ontology',
+            lang: lang_parameter,
             load: 'initial'
         }
     }); // eof treeLoader
@@ -228,6 +360,7 @@ Ext.onReady(function(){
                                     async: false,
                                     data: {
                                         'action': 'ontologyclass_save',
+                                        'lang':lang_parameter,
                                         'titles': 'OntologyClass:' + title,
                                         'text': text
                                     },
@@ -284,6 +417,7 @@ Ext.onReady(function(){
                         store: new Ext.data.JsonStore({
                             url: Ext.HTTP_SERVICE_URL + '/api.php',
                             baseParams: {
+                                 lang: lang_parameter,
                                 action: 'ontology_autocomplete'
                             },
                             totalProperty: 'total',
@@ -367,6 +501,12 @@ Ext.onReady(function(){
                 width: 150
             }),// eof SearchField
             '-',
+            new Ext.Button({text:'test', listeners:{click:function(el,e)
+            {
+                      window.open("http://mappings.dbpedia.org/server/"+mapping_route+"/extractionSamples/"+mapping_alias+":"+Ext.getCmp('templatename').getValue().replace(new RegExp(template_alias+":", "g"), '').replace(/Template\:/, '') );
+            }
+              }
+            }),
             new Ext.Button({
                 text: 'examples',
 
@@ -388,7 +528,8 @@ Ext.onReady(function(){
                             async: false,
                             dataType: 'json',
                             data: {
-                                'titles': 'Template:' + Ext.getCmp('templatename').getValue().replace(/Template\:/, ''),
+                                 'lang' : lang_parameter,
+                                'titles': 'Template:' + Ext.getCmp('templatename').getValue().replace(new RegExp(template_alias+":", "g"), '').replace(/Template\:/, ''),
                                 'action': 'examples'
                             },
 
@@ -445,6 +586,7 @@ Ext.onReady(function(){
     var propertyTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
+            lang: lang_parameter,
             action: 'properties',
             load: 'initial'
         }
@@ -560,6 +702,7 @@ Ext.onReady(function(){
                                     dataType: 'json',
                                     async: false,
                                     data: {
+                                          'lang' : lang_parameter,
                                         'action': 'property_save',
                                         'titles': 'OntologyProperty:' + title,
                                         'text': text
@@ -586,6 +729,7 @@ Ext.onReady(function(){
                                                     async: false,
                                                     data: {
                                                         'action': 'property_save_force',
+                                                        'lang' : lang_parameter,
                                                         'titles': response.newTitle,
                                                         'text': response.newMarkup
                                                     },
@@ -596,7 +740,7 @@ Ext.onReady(function(){
                                                             }
                                                         });
                                                         x.close();
-                                                    },
+                                                    }
                                                 }); // eof $.ajax
                                             }
                                         });
@@ -641,7 +785,9 @@ Ext.onReady(function(){
                         store: new Ext.data.JsonStore({
                             url: Ext.HTTP_SERVICE_URL + '/api.php',
                             baseParams: {
-                                action: 'ontology_autocomplete'
+                                action: 'ontology_autocomplete',
+                                lang : lang_parameter
+
                             },
                             totalProperty: 'total',
                             fields: [
@@ -688,6 +834,7 @@ Ext.onReady(function(){
     var templateTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
+            lang: lang_parameter,
             action: 'template',
             load: 'initial'
         }
@@ -719,6 +866,7 @@ Ext.onReady(function(){
     var unitTreeLoader = new Ext.tree.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
+            lang:lang_parameter,
             action: 'unit',
             load: 'initial'
         }
@@ -808,6 +956,7 @@ Ext.onReady(function(){
                                     dataType: 'json',
                                     async: false,
                                     data: {
+                                    'lang': lang_parameter,
                                         'action': 'datatype_save',
                                         'titles': 'Datatype:' + title,
                                         'text': '{{DisclaimerDatatype}}'
@@ -863,7 +1012,8 @@ Ext.onReady(function(){
     var mappingsTreeLoader = new Ext.dbpedia.TreeLoader({
         dataUrl: Ext.HTTP_SERVICE_URL + '/api.php',
         baseParams: {
-            action: 'map'
+            action: 'map',
+            lang: lang_parameter
             //load: 'initial'
         },
         listeners: {
@@ -1228,6 +1378,48 @@ Ext.onReady(function(){
     var mainWindowGroup = new Ext.WindowGroup;
     mainWindowGroup.zseed = 8000;
 
+   var implemented = new Ext.form.Checkbox(
+   	{
+         id: 'implemented',
+         style  : 'margin-left: 3px; ',
+         boxLabel :'mapped only',
+         listeners: {
+             check: function(el, checked){
+                wikipediaTemplatesStore.setBaseParam('implemented',checked);
+             }
+         }
+   	}
+   );
+      var examplePagesMenu = new Ext.menu.Menu({
+              style: {
+            overflow: 'visible'     // For the Combo popup
+        },
+           items: [
+                 new Ext.Panel({
+                     title: 'Wikipedia article test',
+                     width: 300,
+                     layout: 'anchor',
+                     region: 'west',
+                     border: true,
+                     split: true,
+                     items: [
+                         autoCompleteArticles
+                     ]
+                 }),
+                  {
+                     xtype: 'button'
+                     ,text: 'load page'
+                     ,listeners:
+                     {
+                        click: function(e){
+                          window.open("http://mappings.dbpedia.org/server/extraction/"+lang_parameter+"/extract?format=Trix&title="+Ext.getCmp('articleName').getValue());
+
+                         //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
+                        }
+                     }
+                 }
+              ]
+     });
     // define main window containing the
     // tools widgets
     var win = new Ext.Window({
@@ -1244,7 +1436,8 @@ Ext.onReady(function(){
         closable: false,
         border: false,
         id: 'window',
-        tbar: [{
+        tbar: [
+        {
           xtype: 'button',
           text: 'sync ontology with MediaWiki',
           listeners: {
@@ -1256,6 +1449,7 @@ Ext.onReady(function(){
                         url: Ext.HTTP_SERVICE_URL + '/api.php',
                         params: {
                             action: 'updateall',
+                            lang : lang_parameter,
                             key: Ext.urlEncode({}, text)
                         },
                         success: function(response, opts) {
@@ -1288,17 +1482,35 @@ Ext.onReady(function(){
             }
           }
         },'-',
+
         autoCompleteTemplates
-        ,{
-           xtype: 'button'
+        , implemented ,
+        {
+           style  : 'margin-left: 3px; ',
+           xtype: 'splitbutton'
           ,text: 'load mapping'
+          ,menu : {
+                items: [
+                    implemented
+                ]
+          }
           ,listeners: {
             click: function(e){
               loadTemplates(Ext.getCmp('templatename').getValue());
               //Ext.Msg.alert('Info', Ext.getCmp('templatename').getValue());
             }
           }
-        }
+        },  '-',
+        {
+           menu: examplePagesMenu
+          ,text: 'Test an article'
+
+        } , '-',
+
+        "->", languagesMenu
+
+
+
         // BEGIN edit by Max Jakob (max.jakob@fu-berlin.de)
         ,{
            xtype: 'tbfill'
@@ -1330,6 +1542,7 @@ Ext.onReady(function(){
           }
         // END edit by Max Jakob (max.jakob@fu-berlin.de)
         }],
+
         items: [
             new Ext.Panel({
                 title: 'Wikipedia properties',
@@ -1383,6 +1596,7 @@ Ext.onReady(function(){
                                         async: false,
                                         data: {
                                             'action': 'mapping_save',
+                                            'lang': lang_parameter,
                                             'titles': DBpediaMapperTree.getRootNode().firstChild.attributes.text,
                                             'text': Ext.getCmp('output').getValue()
                                         },
@@ -1407,6 +1621,7 @@ Ext.onReady(function(){
                                         dataType: 'json',
                                         async: false,
                                         data: {
+                                             'lang': lang_parameter,
                                             'action': 'remotevalidate',
                                             'titles': DBpediaMapperTree.getRootNode().firstChild.attributes.text,
                                             'text': Ext.getCmp('output').getValue()
@@ -1596,7 +1811,9 @@ Ext.onReady(function(){
     function loadDbpediaTemplates(templateName)
     {
         mappingsTreeLoader.requestMethod = "GET";
-        mappingsTreeLoader.baseParams.titles = "Mapping:" + templateName;
+        var template= templateName.replace(/Template\:/, '');
+        var regexp = new RegExp(template_alias+":", "g");
+        mappingsTreeLoader.baseParams.titles =mapping_alias+":"  + template.replace(regexp, '');   
         DBpediaMapperTree.root.reload();
         DBpediaMapperTree.expandAll();
     }
@@ -1743,6 +1960,7 @@ Ext.onReady(function(){
                     dataType: 'json',
                     type: 'POST',
                     data: {
+                        'lang': lang_parameter,
                         'action' : 'properties',
                         'load': currentNode.attributes.value
                     },
@@ -1795,14 +2013,12 @@ Ext.onReady(function(){
     }
 
 
+
     loadTemplates(requestedTemplate);
     Ext.getCmp('templatename').setValue(requestedTemplate);
 	
 	
-	////////////////////////////////////////////////////////////
-    // BEGIN edit by Max Jakob (max.jakob@fu-berlin.de)
-    ////////////////////////////////////////////////////////////
-    
+
     // Login form
     var loginForm = new Ext.form.FormPanel({
         frame:true,
@@ -1893,8 +2109,16 @@ Ext.onReady(function(){
     });
 
 
-    ////////////////////////////////////////////////////////////
-    // END edit by Max Jakob (max.jakob@fu-berlin.de)
-    ////////////////////////////////////////////////////////////
-
 }); // end of Ext.onReady()
+
+function gup ( name )
+{
+  name = name.replace(/[\[]/,"\\\[").replace(/[\]]/,"\\\]");
+  var regexS = "[\\?&]"+name+"=([^&#]*)";
+  var regex = new RegExp( regexS );
+  var results = regex.exec( window.location.href );
+  if( results == null )
+    return "";
+  else
+    return results[1];
+}

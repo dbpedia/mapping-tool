@@ -29,9 +29,10 @@ if(   $key !== Zend_Registry::get('config')->sync->ontology->password
 }
 
 // MediaWiki namespaces
+$lang = Zend_Registry::get('language');
 define('NS_DBPEDIA_CLASS',    Zend_Registry::get('config')->dbpedia->ns->NS_DBPEDIA_CLASS    );
 define('NS_DBPEDIA_PROPERTY', Zend_Registry::get('config')->dbpedia->ns->NS_DBPEDIA_PROPERTY );
-define('NS_DBPEDIA_MAPPING',  Zend_Registry::get('config')->dbpedia->ns->NS_DBPEDIA_MAPPING  );
+define('NS_DBPEDIA_MAPPING',  $lang["namespace"]  );
 define('NS_DBPEDIA_DATATYPE', Zend_Registry::get('config')->dbpedia->ns->NS_DBPEDIA_DATATYPE );
 
 // init a cache for DBpedia

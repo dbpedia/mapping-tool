@@ -75,10 +75,13 @@ switch(Tht_Helper_Parameter::REQUEST('action', $defaultValue)){
         break;
         
     // load autocomplete
-    case 'autocomplete':
-        require_once 'api/autocomplete.php';
+    case 'template_autocomplete':
+        require_once 'api/template_autocomplete.php';
         break;
-        
+    case 'article_autocomplete':
+        require_once 'api/article_autocomplete.php';
+        break;
+ 
     // load properties
     case 'properties':
         require_once 'api/properties.php';
@@ -114,7 +117,10 @@ switch(Tht_Helper_Parameter::REQUEST('action', $defaultValue)){
     case 'examples':
         require_once 'api/exampleArticles.php';
         break;
-   
+    case 'languages':
+        require_once 'api/languages.php';
+        break;
+    
     // no given action
     default:
         Tht_Helper_Header::badRequest();

@@ -67,7 +67,87 @@ class Tht_MediaWiki_DBpedia extends Tht_MediaWiki_Reader_Core
 
         return $templateList;
     }
-    
+
+
+
+    public function get_RandomPages()
+    {
+       $lang=Zend_Registry::get('language');
+       $getParams = array(
+            'action' => 'query',
+            'list'   => 'random',
+            'rnlimit' => 1,
+            'rnnamespace' => $lang['namespace'],
+            'format' => 'json'
+  
+        );
+
+       $this->client->resetParameters();
+       $this->client->setParameterGet($getParams);
+       $response = $this->client->request(Zend_Http_Client::GET);
+       $parsed_response = json_decode($response->getBody(), true);
+
+
+       
+
+
+       
+      $pages =    $parsed_response["query"]["random"];
+      $page = $pages[0];
+
+      $alias = str_replace("_"," ",$lang["mappingAlias"]);
+
+      return   str_replace($alias, $lang['wikipediaTemplateAlias'], $page['title']);
+    }
+
+
+
+
+    public function getSuggestedPagesByTitle($title)
+    {
+         $lang=Zend_Registry::get('language');
+        $getParameters = array(
+            'action'    => 'opensearch',
+            'limit'     => Zend_Registry::get('config')->wikipedia->autocomplete->limit,
+            'format'    => 'json',
+            'search'    => $title,
+            'namespace' => $lang['namespace']
+            
+        );
+
+        $this->client->resetParameters();
+        $this->client->setParameterGet($getParameters);
+        $response = $this->client->request(Zend_Http_Client::GET);
+
+        return $this->_getSuggestedPagesFromJsonPageList($response->getBody());
+    }
+
+    protected function _getSuggestedPagesFromJsonPageList($json)
+    {
+      $lang=Zend_Registry::get('language');
+        $json = json_decode($json, true);
+
+        if(!isset($json[1])){
+            return json_encode(array());
+        }
+
+        $out = array();
+       $alias = str_replace("_"," ",$lang["mappingAlias"]);
+        foreach($json[1] as $site){
+         
+
+            ;
+            $out[] = array('site' => str_replace($alias, $lang['wikipediaTemplateAlias'], $site));
+        }
+
+        return json_encode(
+            array(
+                'total' => count($out),
+                'data' => $out
+            )
+        );
+    }
+
     
     /**
     * returns a list of all pages with content of
@@ -140,4 +220,129 @@ class Tht_MediaWiki_DBpedia extends Tht_MediaWiki_Reader_Core
         // return the <Tht_MediaWiki_DocumentList> documentList of <Tht_MediaWiki_Document> documents
         return $list;
     }
+
+
+
+   public function getLanguageNamespaces(){
+        $getParams = array(
+            'action' => 'query',
+            'meta'   => 'siteinfo',
+            'siprop' => 'namespaces',
+            'format' => 'json'
+  
+        );
+
+       $this->client->resetParameters();
+       $this->client->setParameterGet($getParams);
+       $response = $this->client->request(Zend_Http_Client::GET);
+       $parsed_response = json_decode($response->getBody(), true);
+
+
+       
+
+
+       
+      $namespaces =    $parsed_response["query"]["namespaces"];
+      $languages = array();
+      foreach($namespaces as $key => $value)
+      {
+
+             $lang= Array();
+            if (preg_match("/^(Mapping [a-z]{2})$/", $value["*"], $matches)) {
+               $lang["name"]=substr($matches[0],-2);
+               $languages[] =  $lang;
+            }
+
+      }
+
+      //english language workaround
+      $lang=Array();
+      $lang["name"]="en";
+       $languages[] =  $lang;
+       //end of workaround
+
+       $getParams = array(
+            'action' => 'query',
+            'meta'   => 'siteinfo',
+            'siprop' => 'languages',
+            'format' => 'json'
+  
+        );
+        $this->client->resetParameters();
+       $this->client->setParameterGet($getParams);
+       $response = $this->client->request(Zend_Http_Client::GET);
+        $parsed_response = json_decode($response->getBody(), true);
+       $allLanguages =    $parsed_response["query"]["languages"];
+       $allLanguagesCollapsed = $this->array_collapse($allLanguages, "code","*");
+
+      foreach($languages as &$value ) {
+
+      
+         $value["friendlyName"]=$allLanguagesCollapsed[$value["name"]];
+         
+      }
+
+
+      return $languages;
+   }
+   private function array_collapse($arr, $x, $y) {
+      $carr = array();
+      while ($el = current($arr)) {
+        $carr[ $el[$x] ] = $el[$y];
+        next($arr);
+      }
+    return $carr;
+   }
+    public function getLanguageByName($langName){
+        $getParams = array(
+            'action' => 'query',
+            'meta'   => 'siteinfo',
+            'siprop' => 'namespaces',
+            'format' => 'json'
+  
+        );
+
+       $this->client->resetParameters();
+       $this->client->setParameterGet($getParams);
+       $response = $this->client->request(Zend_Http_Client::GET);
+       $parsed_response = json_decode($response->getBody(), true);
+
+
+     
+
+       
+      $namespaces =    $parsed_response["query"]["namespaces"];
+      $namespaceId = $langName=="en"?204:null;//hack for the english language
+      
+      $language = array();
+      foreach($namespaces as $key => $value)
+      {
+
+
+            if (preg_match("/^(Mapping ".$langName.")$/", $value["*"], $matches)) {
+
+            $namespaceId = $value["id"];
+            break;
+            }
+
+      }
+
+      if($namespaceId!=null){
+
+         $language["name"]=$langName;
+         $language["namespace"]=$namespaceId;
+         $language["mappingAlias"]= $langName=='en'?"Mapping" : "Mapping_".$langName;
+         $language["mappingRoute"]= "mappings/".$langName;
+         $wikiURL = Zend_Registry::get('config')->wikipedia->wiki->url;
+         $apiURL = Zend_Registry::get('config')->wikipedia->api->url;
+         $language["wikipediaURL"]= str_replace("en",$langName,$wikiURL)  ;
+         $language["wikipediaAPIURL"] = str_replace("en",$langName,$apiURL);
+         $wr = new Tht_MediaWiki_Wikipedia($language["wikipediaAPIURL"] );
+         $language["wikipediaTemplateAlias"] = $wr->getTemplateAlias();
+         return $language;
+      }
+      
+      
+   }
+
 }

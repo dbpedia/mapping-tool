@@ -6,7 +6,8 @@ if(!defined('__INCLUDE_LOADED__')){
 
 
 if (Tht_Helper_Parameter::hasGET('titles')){
-  $apiUrl = Zend_Registry::get('config')->wikipedia->api->url;
+   $lang=Zend_Registry::get('language');
+  $apiUrl = $lang["wikipediaAPIURL"];
 
   $wr = new Tht_MediaWiki_Wikipedia($apiUrl);
   $markup = $wr->getMarkupByTitle(Tht_Helper_Parameter::GET('titles'));
